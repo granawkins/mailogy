@@ -10,7 +10,7 @@ from mailogy.utils import mailogy_dir, get_user_email
 from mailogy.prompts import script_prompt, script_examples, script_tips
 
 class LLMClient:
-    def __init__(self, log_path, model="gpt-3.5-turbo-1106"):
+    def __init__(self, log_path, model="gpt-4"):
         self.log_path = log_path
         self.model = model
         self.client = None
