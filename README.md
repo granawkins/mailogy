@@ -2,6 +2,8 @@
 
 Interact with your email records using natural language. You can say:
 
+![Demo](https://github.com/granawkins/mailogy/blob/assets/mailogy.mp4)
+
 * “Give me every receipt in my inbox in CSV format, with the following columns: gmail link to the email, sender email, sender name, amount in the receipt.”
 * “Give me every subscription in my inbox including cancelled subscriptions. ""
 * “Tell me every service I’ve ever logged into or signed up for along with time of last login”
