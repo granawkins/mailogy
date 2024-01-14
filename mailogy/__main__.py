@@ -1,7 +1,10 @@
 import argparse
+import ast
+from pathlib import Path
+
 from mailogy.initialize import initialize
 from mailogy.llm_client import get_llm_client
-from mailogy.run import run
+
 
 # Parse arguments
 parser = argparse.ArgumentParser(description='A smart assistant for processing mbox files.')
@@ -12,16 +15,23 @@ mbox_file_path = args.mbox_file_path
 limit = args.limit
 
 
-# Run program
-initialize(mbox_file_path, limit=limit)  # Will prompt for mbox file path if not found
-
+# Main conversation loop
 def run(prompt: str = None):
     if prompt is None:
         print("\nWhat can I do for you?")
         prompt = input("> ").strip()
-    response = get_llm_client().get_response(prompt)
-    print(response)
-    
+    script = get_llm_client().get_script(prompt)
+    try:
+        ast.parse(script)
+        exec(script, globals())
+    except SyntaxError:
+        print(f"Invalid response: {script}")
+    except Exception as e:
+        print(f"An error occurred while running the program: {e}")
+
+
+# Control flow
+initialize(mbox_file_path, limit=limit)
 while True:
     try:
         run()

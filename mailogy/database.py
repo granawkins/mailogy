@@ -87,25 +87,31 @@ class Database:
             print(f"An error occurred: {e}")
             return []
 
+
+
     def summary(self, mbox_path: Path | None = None):
         try:
             with self.conn:
                 if mbox_path:
-                    message_count_query = "SELECT COUNT(*) FROM messages WHERE source = ?;", (str(mbox_path),)
-                    email_counter_query = """
-                        SELECT from_email FROM messages WHERE source = ?
-                        UNION ALL
-                        SELECT to_email FROM messages WHERE source = ?;
-                    """
+                    message_count = self.conn.execute(
+                        "SELECT COUNT(*) FROM messages WHERE source = ?;", (str(mbox_path),)
+                    ).fetchone()[0]
+                    all_emails = self.conn.execute(
+                        """
+                            SELECT from_email FROM messages WHERE source = ?
+                            UNION ALL
+                            SELECT to_email FROM messages WHERE source = ?;
+                        """, (str(mbox_path), str(mbox_path))
+                    ).fetchall()
                 else:
-                    message_count_query = "SELECT COUNT(*) FROM messages;"
-                    email_counter_query = """
-                        SELECT from_email FROM messages
-                        UNION ALL
-                        SELECT to_email FROM messages;
-                    """
-                message_count = self.conn.execute(message_count_query).fetchone()[0]
-                all_emails = self.conn.execute(email_counter_query).fetchall()
+                    message_count = self.conn.execute("SELECT COUNT(*) FROM messages;").fetchone()[0]
+                    all_emails = self.conn.execute(
+                        """
+                            SELECT from_email FROM messages
+                            UNION ALL
+                            SELECT to_email FROM messages;
+                        """
+                    ).fetchall()
                 email_counts = Counter(email for email, in all_emails)
                 return {
                     "message_count": int(message_count),
