@@ -1,6 +1,5 @@
 import re
 from collections import Counter
-from functools import cache
 from pathlib import Path
 import sqlite3
 from mailogy.utils import mailogy_dir

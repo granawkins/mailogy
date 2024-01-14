@@ -1,12 +1,10 @@
+import re
 import warnings
 from dateutil.parser._parser import UnknownTimezoneWarning
-from bs4 import MarkupResemblesLocatorWarning
-import re
 from dateutil.parser import parse
 from hashlib import md5
-from bs4 import BeautifulSoup
 
-from mailogy.database import get_db
+from bs4 import BeautifulSoup, MarkupResemblesLocatorWarning
 
 
 def parse_message(message, index, source):
