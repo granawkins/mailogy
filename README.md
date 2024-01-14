@@ -3,11 +3,8 @@
 Interact with your email records using natural language. You can say:
 
 * “Give me every receipt in my inbox in CSV format, with the following columns: gmail link to the email, sender email, sender name, amount in the receipt.”
-* “Give me every subscription in my inbox including cancelled subscriptions. Tell me what my monthly subscription bill is” (you can probably get this out of the last one)
+* “Give me every subscription in my inbox including cancelled subscriptions. ""
 * “Tell me every service I’ve ever logged into or signed up for along with time of last login”
-* “Identify everyone who is sending me messages that I don’t read, and unsubscribe from them.”
-* “Identify the senders who are sending the highest ratio of emails in to emails replied to”
-* “Identify the most important people in terms of the number of emails sent to them”
 
 ## How to Download Your Gmail as a .mbox File
 
@@ -40,14 +37,12 @@ To use Mailogy, follow these steps:
 
    Replace `path_to_your_mbox_file.mbox` with the actual path to your `.mbox` file.
 
-4. By default, the program processes a limited number of emails (100) to prevent excessive use of your OpenAI API key. If you wish to process more than 100 emails, you can manually set the limit by using the `--limit` or `-l` argument followed by the desired number:
+4. After your `.mbox` file has been processed, you can start mailogy without specifying the file:
 
-   ```
-   python -m mailogy path_to_your_mbox_file.mbox --limit 200
-   ```
+    ```
+    python -m mailogy
+    ```
 
-   **Note:** Be cautious when setting a high limit as it may result in higher costs due to API usage.
+    If you do include a file, you'll be guided through the same workflow as #3.
 
-5. If you do not specify the `--limit` argument, the program will use the default limit of 100 emails. It is recommended to start with the default limit to get an understanding of the program's functionality and API usage.
-
-6. Follow the on-screen prompts to interact with the program and process your email records using natural language commands.
+5. Follow the on-screen prompts to interact with the program and process your email records using natural language commands.
