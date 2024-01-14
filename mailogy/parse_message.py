@@ -52,10 +52,16 @@ def parse_message(message, index, source):
 
         # Add all text intended for humans to content. This includes text/plain and text/html, but exclude html tags
         if content_type in ["text/plain", "text/html"]:
+            charset = part.get_content_charset('utf-8')
+            payload = part.get_payload(decode=True)
+            try:
+                text = payload.decode(charset)
+            except UnicodeDecodeError:
+                text = payload.decode(charset, 'replace')
             try:
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore", MarkupResemblesLocatorWarning)
-                    soup = BeautifulSoup(part.get_payload(decode=True), features="html.parser")
+                    soup = BeautifulSoup(text, features="html.parser")
             except Exception as e:
                 print(f"Error parsing HTML: {e}")
             result["content"] += soup.get_text()

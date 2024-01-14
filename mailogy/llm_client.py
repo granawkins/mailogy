@@ -1,3 +1,4 @@
+import ast
 import json
 from pathlib import Path
 from textwrap import dedent
@@ -5,7 +6,7 @@ from textwrap import dedent
 from dotenv import load_dotenv, set_key
 from openai import OpenAI
 
-from mailogy.utils import mailogy_dir, user_email
+from mailogy.utils import mailogy_dir, get_user_email
 from mailogy.prompts import script_prompt, script_examples, script_tips
 
 class LLMClient:
@@ -72,7 +73,7 @@ class LLMClient:
         if not self.script_messages:
             db_api = (Path(__file__).parent / "database.py").read_text()
             self.script_messages = [
-                {"role": "system", "content": script_prompt + f"\nThe customer's email address is {user_email}"},
+                {"role": "system", "content": script_prompt + f"\nThe customer's email address is {get_user_email()}"},
                 {"role": "system", "content": script_examples},
                 {"role": "system", "content": f"DATABASE API:\n{db_api}"},
                 {"role": "system", "content": script_tips},
@@ -84,18 +85,33 @@ class LLMClient:
             temperature=1,
             agent_name="get_script",
         )
-        try:
+        # Check if there are two instances of  "@@"
+        message = ""  # Anything before @@, or the invalid script
+        script = ""  # An apparently valid script
+        content = ""  # What gets added to conversation; include useful info on errors
+        message, script, content = "", "", ""
+        if response.count("@@") == 2:
             message, script = response.split("@@")[:2]
+        elif response.count("```") == 2:
+            message, script = response.split("```")[:2]
+        else:
+            message, script = response, ""
+        content = message
+        if script:
             script = dedent(script).strip()
-        except (IndexError, ValueError):
+            if script.startswith("python"):
+                script = script[6:].strip()
             try:
-                # Look for ```python blocks (it does these by mistake sometimes)
-                message, script = response.split("```")[:2]
-                if script.startswith("python"):
-                    script = script[6:].strip()
-            except (IndexError, ValueError):
-                message, script = f"Invalid script: {response}", ""
-        self.script_messages.append({"role": "assistant", "content": script})
+                script = json.loads(script)
+            except Exception as e:
+                pass
+            try:
+                ast.parse(script)
+                content += f"\n@@\n{script}\n@@"
+            except SyntaxError as e:
+                message, script = response, ""
+                content += f"\nINVALID SCRIPT: \n@@\n{script}\n@@\n\nERROR MESSAGE: {e}"
+        self.script_messages.append({"role": "assistant", "content": content})
         return message, script
         
 _llm_client_instance = None

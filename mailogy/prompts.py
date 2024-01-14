@@ -77,5 +77,8 @@ methodology for whatever was done previously in your current script. If you're a
 addresses which might be spam, and then asked to plot spam over time, make sure you identify
 spam using the same procedure. 
 
+* If you're asked to match a name, like John Smith, also include addresses that match only one 
+name, and different capitalization, unless the user says otherwise.
+
 * ALWAYS include a "@@" before and after your script. 
 """

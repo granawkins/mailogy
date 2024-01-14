@@ -6,7 +6,7 @@ from pathlib import Path
 from mailogy.database import get_db
 from mailogy.llm_client import get_llm_client
 from mailogy.parse_message import parse_message
-from mailogy.utils import set_user_email
+from mailogy.utils import set_user_email, get_user_email
 
 
 def initialize(mbox_path: Path | None = None, limit: int = 5):
@@ -86,6 +86,7 @@ def initialize(mbox_path: Path | None = None, limit: int = 5):
             print(f"Added {added} messages to database. Total messages: {get_db().summary()['message_count']}")
 
     # Get the most common email address
-    if summary["email_counts"]:
-        most_common_email = summary["email_counts"].most_common(1)[0][0]
-        set_user_email(most_common_email)
+    # if summary["email_counts"]:
+    most_common_email = summary["email_counts"].most_common(1)[0][0]
+    set_user_email(most_common_email)
+    print(f"Hello {get_user_email()}!")
