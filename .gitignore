@@ -1,1 +1,2 @@
 *.mbox 
+**/*__pycache__
