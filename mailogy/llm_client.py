@@ -5,7 +5,7 @@ from textwrap import dedent
 from dotenv import load_dotenv, set_key
 from openai import OpenAI
 
-from mailogy.utils import mailogy_dir
+from mailogy.utils import mailogy_dir, user_email
 from mailogy.prompts import script_prompt, script_examples, script_tips
 
 class LLMClient:
@@ -30,6 +30,7 @@ class LLMClient:
                 self.client = None
                 api_key = input("Enter your OpenAI API key: ").strip()
                 set_key(env_path, 'OPENAI_API_KEY', api_key)
+                load_dotenv(env_path)
         while self.model not in all_models:
             print(f"Model {self.model} not available. Available models:")
             print(all_models)
@@ -71,7 +72,7 @@ class LLMClient:
         if not self.script_messages:
             db_api = (Path(__file__).parent / "database.py").read_text()
             self.script_messages = [
-                {"role": "system", "content": script_prompt},
+                {"role": "system", "content": script_prompt + f"\nThe customer's email address is {user_email}"},
                 {"role": "system", "content": script_examples},
                 {"role": "system", "content": f"DATABASE API:\n{db_api}"},
                 {"role": "system", "content": script_tips},
@@ -83,8 +84,19 @@ class LLMClient:
             temperature=1,
             agent_name="get_script",
         )
-        script = response.split("@@")[1].strip()
-        return script
+        try:
+            message, script = response.split("@@")[:2]
+            script = dedent(script).strip()
+        except (IndexError, ValueError):
+            try:
+                # Look for ```python blocks (it does these by mistake sometimes)
+                message, script = response.split("```")[:2]
+                if script.startswith("python"):
+                    script = script[6:].strip()
+            except (IndexError, ValueError):
+                message, script = f"Invalid script: {response}", ""
+        self.script_messages.append({"role": "assistant", "content": script})
+        return message, script
         
 _llm_client_instance = None
 _client_log_path = mailogy_dir / "logs.jsonl"

@@ -6,33 +6,33 @@ from mailogy.initialize import initialize
 from mailogy.llm_client import get_llm_client
 
 
-parser = argparse.ArgumentParser(description='A smart assistant for processing mbox files.')
+parser = argparse.ArgumentParser(description='A smart assistant for processing email data.')
 parser.add_argument('mbox_file_path', nargs='?', default=None, help='Path to the mbox file (optional)')
-parser.add_argument('--limit', '-l', type=int, default=5, help='Limit the number of emails to process')
 args = parser.parse_args()
 mbox_file_path = args.mbox_file_path
-limit = args.limit
 
 
 # Main conversation loop
 def run(prompt: str = None):
     if prompt is None:
         print("\nWhat can I do for you? (say 'q' to quit)")
-        prompt = input("> ").strip()
+        prompt = input(">>> ").strip()
     if prompt.lower() == "q":
         raise KeyboardInterrupt()
-    script = get_llm_client().get_script(prompt)
-    try:
-        ast.parse(script)
-        exec(script, globals())
-    except SyntaxError:
-        print(f"Invalid response: {script}")
-    except Exception as e:
-        print(f"An error occurred while running the program: {e}")
+    message, script = get_llm_client().get_script(prompt)
+    print(message)
+    if script is not None:
+        try:
+            ast.parse(script)
+            exec(script, globals())
+        except SyntaxError:
+            print(f"Invalid response: {script}")
+        except Exception as e:
+            print(f"An error occurred while running the script: {e}\n\nFull script:\n\n{script}")
 
 
 # Control flow
-initialize(mbox_file_path, limit=limit)
+initialize(mbox_file_path)
 while True:
     try:
         run()

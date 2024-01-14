@@ -1,3 +1,4 @@
+import re
 from collections import Counter
 from functools import cache
 from pathlib import Path
@@ -27,6 +28,8 @@ class Database:
                 message_index INTEGER
             );
         """)
+        # Add REGEXP manually
+        self.conn.create_function("REGEXP", 2, lambda expr, item: re.search(expr, item) is not None)
 
     def __enter__(self):
         return self
@@ -88,7 +91,6 @@ class Database:
             print(f"An error occurred: {e}")
             return []
 
-    @cache
     def summary(self, mbox_path: Path | None = None):
         try:
             with self.conn:
@@ -115,7 +117,7 @@ class Database:
                 email_counts = Counter(email for email, in all_emails)
                 return {
                     "message_count": int(message_count),
-                    "email_counts": dict(email_counts),
+                    "email_counts": email_counts,
                     "top_5": email_counts.most_common(5),
                 }
         except sqlite3.Error as e:

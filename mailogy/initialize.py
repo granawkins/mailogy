@@ -1,94 +1,24 @@
-import re
+from tqdm import tqdm
+from textwrap import dedent
 import mailbox
-from dateutil.parser import parse
 from pathlib import Path
-from hashlib import md5
-from bs4 import BeautifulSoup
 
 from mailogy.database import get_db
 from mailogy.llm_client import get_llm_client
-
-
-def add_message(message, index, source):
-    timestamp = message.get("Date")
-    try:
-        timestamp = parse(timestamp)
-    except Exception as e:
-        pass
-    def parse_email_and_name(raw: str) -> tuple[str, str]:
-        if "<" not in raw:
-            return raw, ""
-        name, email = raw.split("<")
-        email = email.replace(">", "")
-        return email, name
-    from_email, from_name = parse_email_and_name(message.get("From", "N/A"))
-    to_email, to_name = parse_email_and_name(message.get("To", "N/A"))
-    def hash(string: str) -> str:
-        return md5(string.encode("utf-8")).hexdigest()
-    id = hash(message.get("Message-ID", f"{timestamp}{from_email}{to_email}"))
-    subject = message.get("Subject", "N/A")            
-    result = {
-        "id": id,
-        "timestamp": timestamp.isoformat(),
-        "from_email": from_email,
-        "from_name": from_name,
-        "to_email": to_email,
-        "to_name": to_name,
-        "subject": subject,
-        "content": "",
-        "links": [],
-        "attachments": [],
-        "source": source,
-        "message_index": index,
-    }
-
-    # Split body into text (no HTML), a list of links, and a list of attachments
-    def parse_part(part):
-        content_type = part.get_content_type()
-        content_disposition = part.get("Content-Disposition", None)
-
-        # Add all text intended for humans to content. This includes text/plain and text/html, but exclude html tags
-        if content_type in ["text/plain", "text/html"]:
-            soup = BeautifulSoup(part.get_payload(decode=True), features="html.parser")
-            result["content"] += soup.get_text()
-            # Go over it with regex and extract links
-            for link in soup.find_all("a"):
-                result["links"].append(link.get("href"))
-                
-        # Add attachments
-        elif content_disposition is not None and content_disposition.startswith("attachment"):
-            filename = part.get_filename()
-            if filename is not None:
-                result["attachments"].append(filename)
-
-    if message.is_multipart():
-        for part in message.walk():
-            parse_part(part)
-    else:
-        parse_part(message)
-
-    # Clean up
-    result["content"] = re.sub(r"\s+", " ", result["content"]).strip()  # Remove extra whitespace
-    result["links"] = list(set(link.split("?")[0] for link in result["links"]))  # Remove query params from links
-    result["links"] = ",".join(result["links"])  # TODO: Separate table
-    result["attachments"] = ",".join(result["attachments"])  # TODO: Separate table
-
-    get_db().insert([result])
+from mailogy.parse_message import parse_message
+from mailogy.utils import set_user_email
 
 
 def initialize(mbox_path: Path | None = None, limit: int = 5):
-    """
-    1. Check for an opani key
-    2. Check for a database or create one
-    3. Get a database summary
-    4. Compare to inputs
-        - If db, get a set of indexes
-        - If db and not inputs, return
-        - If not db and not inputs, ask for mbox path
-        - Get length of mbox
-        - Display summary
-        - Process new messages if any
-    """
+    # Logo source: https://patorjk.com/software/taag
+    print(dedent("""\
+            __  ___      _ __                 
+           /  |/  /___ _(_) /___  ____ ___  __
+          / /|_/ / __ `/ / / __ \/ __ `/ / / /
+         / /  / / /_/ / / / /_/ / /_/ / /_/ / 
+        /_/  /_/\__,_/_/_/\____/\__, /\__, /  
+        Mailogy                /____//____/"""))
+    
     # Make sure we have an openai key
     get_llm_client()
     summary = get_db().summary()
@@ -104,28 +34,58 @@ def initialize(mbox_path: Path | None = None, limit: int = 5):
 
     # See what we already have form that mbox
     last_index = 0
-    if mbox_path and summary["message_count"] > 0:
+    if summary["message_count"] > 0:
         last_index = get_db().summary(mbox_path)["message_count"]
-        print(f"Found {last_index} messages in the database.")
+        print(f"Found {last_index} saved messages.")
 
     # Load new messages into db
-    added = 0
-    if mbox_path is not None and limit > last_index:
+    if mbox_path is not None:
+
+        # Determine how many records to add
+        limit = None
+        added = 0
+        print(f"Loading your .mbox file (could take a minute or more)...")
         mbox = mailbox.mbox(mbox_path)
-        n_new = limit - last_index
-        print(f"Found {len(mbox)} messages in mbox file, adding {n_new} new (this could take a while)")
-        for index, message in mbox.iteritems():
-            if index < last_index:
-                continue
-            try:
-                if index % 100 == 0:
-                    print(f"{added}/{n_new}..")
-                add_message(message, index, source=str(mbox_path))
-                added += 1
-                if index >= limit:
+        mbox_size = len(mbox)
+        print(f"There are {mbox_size} messages in the mbox file. ")
+        print("How many would you like me to load? You can say 'all' or type a number.")
+        while limit is None:
+            user_input = input("\n>>> ").strip()
+            if user_input == "all":
+                limit = mbox_size
+            else:
+                try:
+                    limit = int(user_input)
+                    assert limit >= 0
+                except ValueError:
+                    print("\nMust be an integer. try again.")
+        limit = min(limit, mbox_size)
+
+        # Load records
+        if limit > 0:
+            records = []
+            # Skip already processed messages
+            for _ in range(last_index):
+                next(mbox.iteritems())
+            for index, message in tqdm(mbox.iteritems(), total=limit, desc="Loading messages"):
+                try:
+                    record = parse_message(message, index, source=str(mbox_path))
+                    records.append(record)
+                    added += 1
+                    if len(records) > 10:
+                        get_db().insert(records)
+                        records = []
+                    if added == limit:
+                        break
+                except Exception as e:
+                    continue
+                except KeyboardInterrupt:
                     break
-            except Exception as e:
-                continue
-            except KeyboardInterrupt:
-                break
-        print(f"Added {added} messages to database")
+            if records:
+                get_db().insert(records)
+            print(f"Added {added} messages to database. Total messages: {get_db().summary()['message_count']}")
+
+    # Get the most common email address
+    if summary["email_counts"]:
+        most_common_email = summary["email_counts"].most_common(1)[0][0]
+        set_user_email(most_common_email)
