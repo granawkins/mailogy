@@ -23,11 +23,19 @@ To download your Gmail emails in `.mbox` format, follow these steps:
 
 ## Usage Guide
 
-To use Mailogy, follow these steps:
+> **Note:** You will need an OpenAI API key to run this program. You can set it as an environmental variable, otherwise your will be prompted to enter your first time.
 
-1. Ensure you have an OpenAI API key. You can set the `OPENAI_API_KEY` environment variable manually, or you will be prompted to enter it when you run the program for the first time.
+1. Clone this repo using the following command:
 
-2. Install the required dependencies by running `pip install -r requirements.txt` in your terminal.
+    ```
+    git clone http://github.com/granawkins/mailogy
+    ```
+
+2. Install the required dependencies with pip:
+
+    ```
+    pip install -r requirements.txt
+    ```
 
 3. To process your `.mbox` file, run the program using the following command:
 
@@ -37,12 +45,12 @@ To use Mailogy, follow these steps:
 
    Replace `path_to_your_mbox_file.mbox` with the actual path to your `.mbox` file.
 
-4. After your `.mbox` file has been processed, you can start mailogy without specifying the file:
+4. Follow the on-screen prompts to interact with the program and process your email records using natural language commands.
+
+5. After your `.mbox` file has been processed, can load your complete library again (without delay) by running:
 
     ```
     python -m mailogy
     ```
 
-    If you do include a file, you'll be guided through the same workflow as #3.
-
-5. Follow the on-screen prompts to interact with the program and process your email records using natural language commands.
+    If you do include a path, you will be guided through the same procedure as #3. 
