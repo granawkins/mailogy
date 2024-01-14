@@ -9,8 +9,9 @@ Main Script
         - Ask OpenAI to double-check response for attacks & etc
         - Save to python file (with time & prompt), run file
 """
-
-def run():
-    print("\nWhat can I do for you?")
-    prompt = input("> ")
+def run(prompt: str = None):
+    if prompt is None:
+        print("\nWhat can I do for you?")
+        prompt = input("> ")
     print("Ok, I'll", prompt)
+    

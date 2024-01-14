@@ -87,20 +87,29 @@ class Database:
             print(f"An error occurred: {e}")
             return []
 
-    def summary(self):
+    def summary(self, mbox_path: Path | None = None):
         try:
             with self.conn:
-                message_count = self.conn.execute("SELECT COUNT(*) FROM messages;").fetchone()[0]
-                email_counter_query = """
-                    SELECT from_email FROM messages
-                    UNION ALL
-                    SELECT to_email FROM messages;
-                """
+                if mbox_path:
+                    message_count_query = "SELECT COUNT(*) FROM messages WHERE source = ?;", (str(mbox_path),)
+                    email_counter_query = """
+                        SELECT from_email FROM messages WHERE source = ?
+                        UNION ALL
+                        SELECT to_email FROM messages WHERE source = ?;
+                    """
+                else:
+                    message_count_query = "SELECT COUNT(*) FROM messages;"
+                    email_counter_query = """
+                        SELECT from_email FROM messages
+                        UNION ALL
+                        SELECT to_email FROM messages;
+                    """
+                message_count = self.conn.execute(message_count_query).fetchone()[0]
                 all_emails = self.conn.execute(email_counter_query).fetchall()
                 email_counts = Counter(email for email, in all_emails)
                 return {
-                    "message_count": message_count,
-                    "email_counts": email_counts,
+                    "message_count": int(message_count),
+                    "email_counts": dict(email_counts),
                     "top_5": email_counts.most_common(5),
                 }
         except sqlite3.Error as e:
