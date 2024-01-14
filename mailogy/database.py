@@ -1,4 +1,5 @@
 from collections import Counter
+from functools import cache
 from pathlib import Path
 import sqlite3
 from mailogy.utils import mailogy_dir
@@ -87,8 +88,7 @@ class Database:
             print(f"An error occurred: {e}")
             return []
 
-
-
+    @cache
     def summary(self, mbox_path: Path | None = None):
         try:
             with self.conn:

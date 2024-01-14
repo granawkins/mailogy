@@ -6,7 +6,6 @@ from mailogy.initialize import initialize
 from mailogy.llm_client import get_llm_client
 
 
-# Parse arguments
 parser = argparse.ArgumentParser(description='A smart assistant for processing mbox files.')
 parser.add_argument('mbox_file_path', nargs='?', default=None, help='Path to the mbox file (optional)')
 parser.add_argument('--limit', '-l', type=int, default=5, help='Limit the number of emails to process')
@@ -18,8 +17,10 @@ limit = args.limit
 # Main conversation loop
 def run(prompt: str = None):
     if prompt is None:
-        print("\nWhat can I do for you?")
+        print("\nWhat can I do for you? (say 'q' to quit)")
         prompt = input("> ").strip()
+    if prompt.lower() == "q":
+        raise KeyboardInterrupt()
     script = get_llm_client().get_script(prompt)
     try:
         ast.parse(script)

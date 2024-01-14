@@ -112,10 +112,14 @@ def initialize(mbox_path: Path | None = None, limit: int = 5):
     added = 0
     if mbox_path is not None and limit > last_index:
         mbox = mailbox.mbox(mbox_path)
+        n_new = limit - last_index
+        print(f"Found {len(mbox)} messages in mbox file, adding {n_new} new (this could take a while)")
         for index, message in mbox.iteritems():
             if index < last_index:
                 continue
             try:
+                if index % 100 == 0:
+                    print(f"{added}/{n_new}..")
                 add_message(message, index, source=str(mbox_path))
                 added += 1
                 if index >= limit:
