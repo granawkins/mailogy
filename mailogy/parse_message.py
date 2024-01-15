@@ -13,7 +13,8 @@ def parse_message(message, index, source):
     try:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UnknownTimezoneWarning)
-            timestamp = parse(timestamp).isoformat()
+            timestamp = parse(timestamp)
+            timestamp = timestamp.strftime("%Y-%m-%d %H:%M:%S")
     except Exception as e:
         timestamp = ""
     def parse_email_and_name(raw: str) -> tuple[str, str]:
@@ -86,3 +87,4 @@ def parse_message(message, index, source):
     result["attachments"] = ",".join(result["attachments"])  # TODO: Separate table
 
     return result
+
