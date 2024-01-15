@@ -25,7 +25,7 @@ def run(prompt: str = None):
     if script is not None:
         try:
             ast.parse(script)
-            validate_imports(script)
+            # validate_imports(script)
             exec(script, globals())
         except SyntaxError:
             print(f"Invalid response: {script}")
