@@ -1,42 +1,45 @@
 import ast
 import json
+import os
 from pathlib import Path
 from textwrap import dedent
 
-from dotenv import load_dotenv, set_key
-from openai import OpenAI
+from dotenv import load_dotenv
 from litellm import completion, completion_cost
 
-from mailogy.utils import mailogy_dir, get_user_email
+from mailogy.utils import (
+    mailogy_dir, 
+    get_user_email, 
+    get_llm_base_url, 
+    get_llm_api_key, 
+    get_llm_model,
+    set_base_url,
+    set_llm_api_key,
+    set_llm_model
+)
 from mailogy.prompts import script_prompt, script_examples, script_tips
 
 class LLMClient:
     def __init__(self, log_path, model="gpt-4"):
         self.log_path = log_path
-        self.model = model
-        self.client = None
+        self.model = get_llm_model() or model
         self.conversation = []
-
+        self.base_url = get_llm_base_url() or None
+        self.api_key = get_llm_api_key() or None
         self._setup_client()
         
     def _setup_client(self):
         env_path = mailogy_dir / ".env"
         load_dotenv(env_path)
-        all_models = []
-        while self.client is None:
-            try:
-                self.client = OpenAI()
-                all_models = {m.id for m in self.client.models.list().data}
-            except Exception as e:
-                print(f"Couldn't initialize OpenAI client: {e}")
-                self.client = None
-                api_key = input("Enter your OpenAI API key: ").strip()
-                set_key(env_path, 'OPENAI_API_KEY', api_key)
-                load_dotenv(env_path)
-        while self.model not in all_models:
-            print(f"Model {self.model} not available. Available models:")
-            print(all_models)
-            self.model = input("Enter a model name: ").strip()
+        self.base_url = get_llm_base_url() or 'https://api.openai.com/v1'
+        set_base_url(self.base_url)
+        self.model = get_llm_model() or 'gpt-4'
+        set_llm_model(self.model)
+        self.api_key = get_llm_api_key() or os.getenv("OPENAI_API_KEY")
+        while self.api_key is None:
+            print(f"API Key {self.api_key} not found. ")
+            self.api_key = input("Enter API Key (e.g. OpenAI): ").strip()
+            set_llm_api_key(self.api_key)
 
     def get_response(
         self, model: str = None, 
@@ -54,15 +57,18 @@ class LLMClient:
 
         try:
             selected_model = model or self.model
+            base_url = self.base_url or "https://api.openai.com/v1"
             response = completion(
+                base_url=base_url,
+                api_key=self.api_key,
                 model=selected_model,
                 messages=messages,
                 temperature=temperature,
             )
-            cost = completion_cost(completion_response=response)
-            print(f"Cost for completion call: {selected_model}", f"${float(cost):.10f}")
             text = (response.choices[0].message.content) or ""
             log["response"] = text
+            cost = completion_cost(completion_response=response) or 0
+            print(f"Cost for completion call: {selected_model}", f"${float(cost):.10f}")
             log["cost"] = f"{float(cost):.10f}"
             return text
         except Exception as e:
