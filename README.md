@@ -1,5 +1,7 @@
 # Mailogy
 
+https://github.com/granawkins/mailogy/assets/50287275/202f28fc-d148-4666-a6d0-dd02fc2a0b63
+
 Interact with your email records using natural language. You can say:
 
 * “Give me every receipt in my inbox in CSV format, with the following columns: gmail link to the email, sender email, sender name, amount in the receipt.”
