@@ -1,3 +1,6 @@
+import re
+import importlib
+import subprocess
 from pathlib import Path
 
 # Create a .mailogy directory in the user's home directory
@@ -14,3 +17,31 @@ def set_user_email(name: str):
 def get_user_email():
     global user_email
     return user_email
+
+def validate_imports(script: str):
+    """Check that the script imports everything it needs
+
+    Args:
+        script (str): The script to validate
+    
+    1) Find import lines
+    2) Try to import each one
+    3) If it fails, use print/input to ask user's approval to install from pip
+    """
+    # Find import lines
+    import_lines = re.findall(r"import\s+[\w\.]+", script)
+    import_lines += re.findall(r"from\s+[\w\.]+\s+import\s+[\w\.]+", script)
+    import_lines = [line.replace("from ", "").replace(" import ", ".") for line in import_lines]
+
+    # Try to import each one
+    for line in import_lines:
+        if "get_db" in line:
+            continue
+        try:
+            importlib.import_module(line)
+        except ModuleNotFoundError:
+            print(f"Could not import {line}.")
+            if input(f"Script requires {line}. Install it now using pip? (y/n) ").lower() == "y":
+                subprocess.run(["pip", "install", line])
+            else:
+                raise ModuleNotFoundError(f"Could not import {line}.")
