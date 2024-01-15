@@ -1,3 +1,6 @@
+import re
+import importlib
+import subprocess
 import yaml
 from pathlib import Path
 
@@ -54,3 +57,20 @@ def set_base_url(base_url: str):
     config = load_config()
     config['llm_base_url'] = base_url
     save_config(config)
+
+def validate_imports(script: str):
+    import_lines = re.findall(r"import\s+[\w\.]+", script)
+    import_lines += re.findall(r"from\s+[\w\.]+\s+import\s+[\w\.]+", script)
+    import_lines = [line.replace("from ", "").replace(" import ", ".") for line in import_lines]
+
+    for line in import_lines:
+        if "get_db" in line:
+            continue
+        try:
+            importlib.import_module(line)
+        except ModuleNotFoundError:
+            if input(f"Script requires {line}. Should I install it with pip? (y/n) ").lower() == "y":
+                subprocess.run(["pip", "install", line])
+            else:
+                raise ModuleNotFoundError(f"Could not import {line}.")
+
