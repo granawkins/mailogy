@@ -1,3 +1,6 @@
+import re
+import importlib
+import subprocess
 import yaml
 from pathlib import Path
 
@@ -27,3 +30,19 @@ def set_user_email(name: str):
 def get_user_email():
     config = load_config()
     return config.get('user_email')
+
+def validate_imports(script: str):
+    import_lines = re.findall(r"import\s+[\w\.]+", script)
+    import_lines += re.findall(r"from\s+[\w\.]+\s+import\s+[\w\.]+", script)
+    import_lines = [line.replace("from ", "").replace(" import ", ".") for line in import_lines]
+
+    for line in import_lines:
+        if "get_db" in line:
+            continue
+        try:
+            importlib.import_module(line)
+        except ModuleNotFoundError:
+            if input(f"Script requires {line}. Should I install it with pip? (y/n) ").lower() == "y":
+                subprocess.run(["pip", "install", line])
+            else:
+                raise ModuleNotFoundError(f"Could not import {line}.")

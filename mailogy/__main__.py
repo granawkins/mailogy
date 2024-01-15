@@ -4,6 +4,7 @@ from pathlib import Path
 
 from mailogy.initialize import initialize
 from mailogy.llm_client import get_llm_client
+from mailogy.utils import validate_imports
 
 
 parser = argparse.ArgumentParser(description='A smart assistant for processing email data.')
@@ -24,6 +25,7 @@ def run(prompt: str = None):
     if script is not None:
         try:
             ast.parse(script)
+            validate_imports(script)
             exec(script, globals())
         except SyntaxError:
             print(f"Invalid response: {script}")

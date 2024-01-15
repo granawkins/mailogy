@@ -32,6 +32,7 @@ class Database:
                 message_index INTEGER
             );
         """)
+        # NOTE: timestamp is "YYYY-MM-DD HH:MM:SS"
         # NOTE: links and attachments are comma-separated lists. 
 
         # Add REGEXP manually

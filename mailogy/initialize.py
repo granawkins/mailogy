@@ -90,6 +90,7 @@ def initialize(mbox_path: Path | None = None, limit: int = 5):
 
     # Get the most common email address
     # if summary["email_counts"]:
+    summary = get_db().summary()
     most_common_email = summary["email_counts"].most_common(1)[0][0]
     set_user_email(most_common_email)
     print(f"Hello {get_user_email()}!")
