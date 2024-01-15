@@ -31,6 +31,33 @@ def get_user_email():
     config = load_config()
     return config.get('user_email')
 
+def get_llm_base_url():
+    config = load_config()
+    return config.get('llm_base_url')
+
+def get_llm_model():
+    config = load_config()
+    return config.get('llm_model')
+
+def get_llm_api_key():
+    config = load_config()
+    return config.get('llm_api_key')
+
+def set_llm_model(model_name: str):
+    config = load_config()
+    config['llm_model'] = model_name
+    save_config(config)
+
+def set_llm_api_key(api_key: str):
+    config = load_config()
+    config['llm_api_key'] = api_key
+    save_config(config)
+
+def set_base_url(base_url: str):
+    config = load_config()
+    config['llm_base_url'] = base_url
+    save_config(config)
+
 def validate_imports(script: str):
     import_lines = re.findall(r"import\s+[\w\.]+", script)
     import_lines += re.findall(r"from\s+[\w\.]+\s+import\s+[\w\.]+", script)
@@ -46,3 +73,4 @@ def validate_imports(script: str):
                 subprocess.run(["pip", "install", line])
             else:
                 raise ModuleNotFoundError(f"Could not import {line}.")
+
