@@ -5,6 +5,7 @@ from textwrap import dedent
 
 from dotenv import load_dotenv, set_key
 from openai import OpenAI
+from litellm import completion, completion_cost
 
 from mailogy.utils import mailogy_dir, get_user_email
 from mailogy.prompts import script_prompt, script_examples, script_tips
@@ -48,16 +49,21 @@ class LLMClient:
             "prompt": messages[-1]["content"],
             "temperature": temperature,
             "agent_name": agent_name,
+            "cost": None,
         }
-        # TODO: Calculate cost
+
         try:
-            response = self.client.chat.completions.create(
-                model=model or self.model,
+            selected_model = model or self.model
+            response = completion(
+                model=selected_model,
                 messages=messages,
                 temperature=temperature,
             )
+            cost = completion_cost(completion_response=response)
+            print(f"Cost for completion call: {selected_model}", f"${float(cost):.10f}")
             text = (response.choices[0].message.content) or ""
             log["response"] = text
+            log["cost"] = f"{float(cost):.10f}"
             return text
         except Exception as e:
             log["error"] = str(e)
