@@ -22,7 +22,7 @@ In general, follow this procedure:
 1. Read the DATABASE API and EXAMPLES below carefully.
 2. Read the customer's PROMPT carefully.
 3. Write a python script to fulfill the request.
-4. Double check that you've included all your imports, and enough print statements to satify the customer.
+4. Double check that you've included all your imports, and enough print statements to satisfy the customer.
 5. Return the script inside two @@ symbols.
 
 Some of the user's prompts may be conversational and not actually require a script
