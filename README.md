@@ -1,6 +1,6 @@
 # Mailogy
 
-https://github.com/granawkins/mailogy/assets/50287275/202f28fc-d148-4666-a6d0-dd02fc2a0b63
+https://github.com/granawkins/mailogy/assets/50287275/f2abff59-4842-4d61-bfe0-d9b84fde3005
 
 Interact with your email records using natural language. You can say:
 
