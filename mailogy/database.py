@@ -4,6 +4,11 @@ from pathlib import Path
 import sqlite3
 from mailogy.utils import mailogy_dir
 
+"""
+NOTE: This entire doubles as the database API, which is sent directly to the LLM.
+Any important notes about structure or schema should be included directly as comments.
+"""
+
 class Database:
     def __init__(self, db_path: Path):
         self.db_path = db_path
@@ -27,6 +32,8 @@ class Database:
                 message_index INTEGER
             );
         """)
+        # NOTE: links and attachments are comma-separated lists. 
+
         # Add REGEXP manually
         self.conn.create_function("REGEXP", 2, lambda expr, item: re.search(expr, item) is not None)
 
@@ -81,14 +88,6 @@ class Database:
                 """, records)
         except sqlite3.Error as e:
             print(f"An error occurred: {e}")
-
-    def schema(self):
-        try:
-            with self.conn:
-                return [row[1] for row in self.conn.execute("PRAGMA table_info(messages);")]
-        except sqlite3.Error as e:
-            print(f"An error occurred: {e}")
-            return []
 
     def summary(self, mbox_path: Path | None = None):
         try:

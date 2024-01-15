@@ -48,17 +48,20 @@ def initialize(mbox_path: Path | None = None, limit: int = 5):
         mbox = mailbox.mbox(mbox_path)
         mbox_size = len(mbox)
         print(f"There are {mbox_size} messages in the mbox file. ")
-        print("How many would you like me to load? You can say 'all' or type a number.")
+        print("How many would you like me to load? You can say a number, 'all', or 0 (default)")
         while limit is None:
             user_input = input("\n>>> ").strip()
+            if not user_input:
+                limit = 0
             if user_input == "all":
                 limit = mbox_size
             else:
                 try:
-                    limit = int(user_input)
-                    assert limit >= 0
-                except ValueError:
-                    print("\nMust be an integer. try again.")
+                    user_input = int(user_input)
+                    assert user_input >= 0
+                    limit = user_input
+                except (ValueError, AssertionError):
+                    print("\nMust be a positive integer, 0 or 'all'. Try again.")
         limit = min(limit, mbox_size)
 
         # Load records
