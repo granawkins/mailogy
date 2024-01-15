@@ -58,7 +58,7 @@ To download your Gmail emails in `.mbox` format, follow these steps:
     If you do include a path, you will be guided through the same procedure as #3. 
 
 ## Running OpenAI-compatible models
-1. Edit ~/.mailbox/.config.yaml file:
+1. Edit ~/.mailbox/config.yaml file:
     ```
     llm_base_url: https://api.mistral.ai/v1
     llm_api_key: mistral-api-key
@@ -67,7 +67,7 @@ To download your Gmail emails in `.mbox` format, follow these steps:
 
 ## Running local models using [ollama](https://ollama.ai/)
 1. Run `ollama serve` on our terminal. 
-2. Edit ~/.mailbox/.config.yaml file:
+2. Edit ~/.mailbox/config.yaml file:
     ```
     llm_base_url: http://127.0.0.1:11434
     llm_model: ollama_chat/mistral
